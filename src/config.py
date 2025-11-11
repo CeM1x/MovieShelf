@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     DB_PASS: str
     DB_NAME: str
 
+    SECRET_KEY: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+
     @property
     def DATABASE_URL_asyncpg(self):
         # URL для асинхронного подключения через asyncpg
