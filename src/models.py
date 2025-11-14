@@ -1,8 +1,7 @@
 import datetime
 from typing import Annotated, Optional
-from pydantic import EmailStr
 from sqlalchemy import String, text, Integer, CheckConstraint, ForeignKey, Float
-from database import Base
+from src.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 

@@ -1,21 +1,22 @@
-from fastapi.security import OAuth2PasswordRequestForm
-from flask import session
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.hash import bcrypt
-from jose import jwt
-from fastapi import security, APIRouter, HTTPException, Depends, status
+from jose import jwt, JWTError
+from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy import select
 from datetime import datetime, timedelta, UTC
-from src.schemas import UserReadSchema, UserCreateSchema
+from src.schemas import UserReadSchema, UserCreateSchema, TokenSchema, LoginSchema
 from src.database import SessionDep
 from src.models import User
-from src.config import settings
+from src.config import settings, SECRET_KEY, ALGORITHM
+
 
 router = APIRouter(
     prefix="/auth",
     tags=["Auth"]
 )
 
-ALGORITHM = "HS256"
+
+# ------------------- Создание токена доступа -------------------
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -25,20 +26,17 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-
 # ------------------- Регистрация -------------------
 
 @router.post("/register", response_model=UserReadSchema)
-async def register_user(user_data: UserCreateSchema = Depends(), session: SessionDep = Depends()):
-    query = (
-        select(User).where(User.email == user_data.email)
-    )
+async def register_user(user_data: UserCreateSchema, session: SessionDep):
+    query = select(User).where(User.email == user_data.email)
     result = await session.execute(query)
     existing_user = result.scalar_one_or_none()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email уже зарегистрирован")
     else:
-        hashed_password = bcrypt.hash(user_data.password)
+        hashed_password = bcrypt.hash(user_data.password[:72])
         user = User(email=user_data.email, password_hash=hashed_password)
         session.add(user)
         await session.commit()
@@ -47,8 +45,8 @@ async def register_user(user_data: UserCreateSchema = Depends(), session: Sessio
 
 # ------------------- Авторизация -------------------
 
-@router.post("/login")
-async def login_user(form_data: OAuth2PasswordRequestForm, session: SessionDep):
+@router.post("/login", response_model=TokenSchema)
+async def login_user(session: SessionDep, form_data: LoginSchema):
     query = select(User).where(User.email == form_data.username)
     result = await session.execute(query)
     user = result.scalar_one_or_none()
@@ -61,7 +59,7 @@ async def login_user(form_data: OAuth2PasswordRequestForm, session: SessionDep):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Неверный email или пароль")
 
-    payload = {"sub": str(user.id), "email": user.email}
+    payload = {"sub": user.email}
     token = create_access_token(payload)
 
     return {
@@ -70,5 +68,36 @@ async def login_user(form_data: OAuth2PasswordRequestForm, session: SessionDep):
     }
 
 
-# добавит /me
+# ------------------- Получение текущего пользователя -------------------
+
+oauth2_scheme = HTTPBearer()
+
+async def get_current_user_from_token(token: str, session: SessionDep):
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+
+    except JWTError:
+        return None
+
+    stmt = select(User).where(User.email == email)
+    result = await session.execute(stmt)
+    user = result.scalar_one_or_none()
+
+    return user
+
+
+@router.get("/me", response_model=UserReadSchema)
+async def get_me(session: SessionDep, credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme)):
+    token = credentials.credentials
+    user = await get_current_user_from_token(token, session)
+
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    return user
+
 

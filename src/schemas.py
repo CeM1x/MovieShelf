@@ -1,14 +1,13 @@
 import datetime
-from typing import Optional, List
-
-from pydantic import BaseModel, EmailStr, Field
+from typing import Optional
+from pydantic import BaseModel, EmailStr, constr
 
 
 # ------------------ User ------------------
 
 class UserCreateSchema(BaseModel):
     email: EmailStr
-    password: str  # чистый пароль, хешируется на сервере
+    password: constr(min_length=4, max_length=72)  # чистый пароль, хешируется на сервере
 
 class UserReadSchema(BaseModel):
     id: int
@@ -69,3 +68,18 @@ class MovieReadSchema(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+# ------------------ Access token ------------------
+
+class TokenSchema(BaseModel):
+    access_token: str
+    token_type: str
+
+
+# ------------------ Login Schema ------------------
+
+class LoginSchema(BaseModel):
+    username: str
+    password: str
+
