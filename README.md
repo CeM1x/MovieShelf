@@ -64,9 +64,8 @@ MovieShelf — это учебный проект на Python, в котором
 Реализован endpoint /login для аутентификации:
 1) Использование OAuth2PasswordRequestForm для обработки формы логина
 2) Проверка email и пароля
-3) Генерация JWT-токена с полезной нагрузкой (sub и email) и сроком действия
-
-Создана функция create_access_token для генерации JWT
+3) Генерация JWT-токена с полезной нагрузкой (sub и email) и сроком действия 
+4) Создана функция create_access_token для генерации JWT
 
 - Day 4–5 
 
@@ -77,3 +76,10 @@ MovieShelf — это учебный проект на Python, в котором
 5) Добавлены новые схемы TokenSchema и LoginSchema.  
 6) Временно все файлы перенесены в папку src/ для корректных импортов и упрощения структуры проекта.  
 7) Проведён рефакторинг auth-модуля, проверены эндпоинты /register, /login, /auth/me.
+
+- Day 6
+
+1) В config.py перенесены TMDB_API_KEY и
+    TMDB_ACCESS_API_KEY из main.py
+2) Создан репозиторий utils и файл tmdb.py для работы с TMDB API
+3) Начата работа с маршрутизатором /movies_router, реализованы CRUD endpoints

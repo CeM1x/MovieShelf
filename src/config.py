@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     ALGORITHM: str = "H256"
 
+    TMDB_API_KEY: str
+    TMDB_ACCESS_API_KEY: str
+
     @property
     def DATABASE_URL_asyncpg(self):
         # URL для асинхронного подключения через asyncpg

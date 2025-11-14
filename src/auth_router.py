@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, UTC
 from src.schemas import UserReadSchema, UserCreateSchema, TokenSchema, LoginSchema
 from src.database import SessionDep
 from src.models import User
-from src.config import settings, SECRET_KEY, ALGORITHM
+from src.config import settings, ALGORITHM
 
 
 router = APIRouter(
@@ -26,7 +26,7 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-# ------------------- Регистрация -------------------
+# --------------------------- Регистрация ------------------------
 
 @router.post("/register", response_model=UserReadSchema)
 async def register_user(user_data: UserCreateSchema, session: SessionDep):
@@ -43,7 +43,7 @@ async def register_user(user_data: UserCreateSchema, session: SessionDep):
         await session.refresh(user)
         return user
 
-# ------------------- Авторизация -------------------
+# ---------------------- Авторизация ----------------------------
 
 @router.post("/login", response_model=TokenSchema)
 async def login_user(session: SessionDep, form_data: LoginSchema):
@@ -68,7 +68,7 @@ async def login_user(session: SessionDep, form_data: LoginSchema):
     }
 
 
-# ------------------- Получение текущего пользователя -------------------
+# ----------------- Получение текущего пользователя -------------------
 
 oauth2_scheme = HTTPBearer()
 
@@ -96,7 +96,7 @@ async def get_me(session: SessionDep, credentials: HTTPAuthorizationCredentials 
     user = await get_current_user_from_token(token, session)
 
     if user is None:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        raise HTTPException(status_code=401, detail="Недействительный или просроченный токен")
 
     return user
 
