@@ -43,21 +43,16 @@ class ReviewReadSchema(BaseModel):
 
 # ------------------ Movie ------------------
 
-class MovieAddSchema(BaseModel):
-    tmdb_id: int
+class MovieAddCustomSchema(BaseModel):
     title: str
     genre: Optional[str] = None
     description: Optional[str] = None
     rating: Optional[float] = 0.0
-    owner_id: Optional[int] = None  # если фильм ещё не привязан к пользователю
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 class MovieReadSchema(BaseModel):
     id: int
-    tmdb_id: int
     title: str
     genre: Optional[str] = None
     description: Optional[str] = None
@@ -68,6 +63,12 @@ class MovieReadSchema(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+# ------------------ Update rating ------------------
+
+class RatingUpdateSchema(BaseModel):
+    rating: int
 
 
 # ------------------ Access token ------------------

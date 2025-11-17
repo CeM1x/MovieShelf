@@ -8,8 +8,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 intpk = Annotated[int, mapped_column(primary_key=True)]
 created_at = Annotated[datetime.datetime, mapped_column(server_default=text("TIMEZONE('utc', now())"))]
 
-
-
 class User(Base):
     __tablename__ = "users"
 
@@ -27,7 +25,6 @@ class Movie(Base):
     __table_args__ = (CheckConstraint("rating >= 0.0 AND rating <= 5.0", name="rating_range"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    tmdb_id: Mapped[int] = mapped_column(Integer, unique=True, nullable=False)  # ID фильма из TMDB
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     genre: Mapped[str] = mapped_column(String(100))
     description: Mapped[Optional[str]]

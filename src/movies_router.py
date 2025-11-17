@@ -1,15 +1,12 @@
 from typing import List
-
-from dns.e164 import query
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
 
-from src.schemas import MovieReadSchema, MovieAddSchema, ReviewReadSchema
+from src.schemas import MovieReadSchema, RatingUpdateSchema, MovieAddCustomSchema
 from src.database import SessionDep
 from src.auth_router import get_current_user_from_token
 from src.models import Movie
-from src.utils.tmdb import get_movie_from_tmdb
 
 router = APIRouter(
     prefix="/movies",
@@ -18,38 +15,23 @@ router = APIRouter(
 
 oauth2_scheme = HTTPBearer()
 
-# ------------------- Добавить фильм -------------------
 
-@router.post("/add", response_model=MovieReadSchema)
-async def add_movie(movie_data: MovieAddSchema,
-                    session: SessionDep,
-                    credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme)):
+# ------------------- Добавить собственный фильм -------------------
+
+@router.post("/add-custom", response_model=MovieReadSchema)
+async def add_movie_custom(movie_data: MovieAddCustomSchema,
+                           session: SessionDep,
+                           credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme)):
 
     token = credentials.credentials
     user = await get_current_user_from_token(token, session)
-
     if not user:
         raise HTTPException(status_code=401, detail="Недействительный или просроченный токен")
 
-    # Проверяем есть ли такой фильм в базе
-    query = select(Movie).where(Movie.tmdb_id == movie_data.tmdb_id,
-                               Movie.owner_id == user.id)
-    result = await session.execute(query)
-    existing = result.scalar_one_or_none()
-
-    if existing:
-        return existing
-
-    # Если не хватает данных — дополняем через TMDB
-    if not movie_data.title:
-        tmdb_info = await get_movie_from_tmdb(movie_data.tmdb_id)
-        movie_data.title = tmdb_info["title"]
-        movie_data.genre = tmdb_info["genre"]
-        movie_data.description = tmdb_info["description"]
-
+    if movie_data.rating is not None and not (0 <= movie_data.rating <= 5):
+        raise HTTPException(status_code=400, detail="Рейтинг должен быть от 0 до 5")
 
     new_movie = Movie(
-        tmdb_id=movie_data.tmdb_id,
         title=movie_data.title,
         genre=movie_data.genre,
         description=movie_data.description,
@@ -76,7 +58,7 @@ async def get_my_movies(session: SessionDep, credentials: HTTPAuthorizationCrede
 
     query = select(Movie).where(Movie.owner_id == user.id)
     result = await session.execute(query)
-    movies = result.scalars_all()
+    movies = result.scalars().all()
 
     return movies
 
@@ -109,7 +91,7 @@ async def delete_movie(movie_id: int, session: SessionDep, credentials: HTTPAuth
 # -------------------------- Обновить локальный рейтинг --------------------------
 
 @router.patch("/{movie_id}/rate", response_model=MovieReadSchema)
-async def update_rating(movie_id: int, new_rating:int,
+async def update_rating(movie_id: int, body: RatingUpdateSchema,
                         session: SessionDep,
                         credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme)):
     token = credentials.credentials
@@ -124,6 +106,8 @@ async def update_rating(movie_id: int, new_rating:int,
 
     if not movie:
         raise HTTPException(status_code=404, detail="Фильм не найден")
+
+    new_rating = body.rating
 
     if not (0 <= new_rating <= 5):
         raise HTTPException(status_code=400, detail="Рейтинг должен быть от 0 до 5")
