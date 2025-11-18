@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from src.auth_router import router as auth_router
-from src.movies_router import router as movies_router
-from src.reviews_router import router as reviews_router
+from src.routers.auth_router import router as auth_router
+from src.routers.movies_router import router as movies_router
+from src.routers.reviews_router import router as reviews_router
 
 
 app = FastAPI()

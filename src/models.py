@@ -33,6 +33,11 @@ class Movie(Base):
     #Внешний ключ
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     owner: Mapped["User"] = relationship(back_populates="movies")
+    reviews: Mapped[list["Review"]] = relationship(
+        back_populates="movie",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
 
 
 class Review(Base):
@@ -41,9 +46,9 @@ class Review(Base):
     id: Mapped[intpk]
     text: Mapped[Optional[str]]
     score: Mapped[float] = mapped_column(Float, nullable=False)
-    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id")) # внешний ключ к фильму
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id", ondelete="CASCADE"), nullable=False) # внешний ключ к фильму
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))   # внешний ключ к пользователю
 
-    movie: Mapped["Movie"] = relationship()
+    movie: Mapped["Movie"] = relationship(back_populates="reviews")
     user: Mapped["User"] = relationship()
 

@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from src.schemas import MovieReadSchema, RatingUpdateSchema, MovieAddCustomSchema
 from src.database import SessionDep
-from src.auth_router import get_current_user_from_token
+from src.routers.auth_router import get_current_user_from_token
 from src.models import Movie
 
 router = APIRouter(

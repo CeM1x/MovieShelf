@@ -3,7 +3,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth_router import get_current_user_from_token
+from src.routers.auth_router import get_current_user_from_token
 from src.models import Movie, Review
 from src.schemas import ReviewReadSchema, ReviewCreateSchema
 from src.database import SessionDep
