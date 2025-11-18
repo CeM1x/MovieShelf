@@ -31,6 +31,7 @@ class ReviewCreateSchema(BaseModel):
     }
 
 class ReviewReadSchema(BaseModel):
+    id: int
     user_id: int
     movie_id: int
     score: float
